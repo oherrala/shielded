@@ -5,7 +5,7 @@ authors = ["Ossi Herrala <oherrala@iki.fi>"]
 license = "MIT"
 edition = "2018"
 
-description = "Shielded Memory"
+description = "Shielded Memory. Memory protection from speculation and side-channel attacks like Spectre, Meltdown, Rowhammer and Rambleed."
 homepage = "https://github.com/oherrala/shielded#readme"
 repository = "https://github.com/oherrala/shielded"
 readme = "README.md"
