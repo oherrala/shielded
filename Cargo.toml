@@ -1,0 +1,21 @@
+[package]
+name = "shielded"
+version = "0.1.0"
+authors = ["Ossi Herrala <oherrala@iki.fi>"]
+license = "MIT"
+edition = "2018"
+
+description = "Shielded Memory"
+homepage = "https://github.com/oherrala/shielded#readme"
+repository = "https://github.com/oherrala/shielded"
+readme = "README.md"
+
+categories = [ "cryptography", "data-structures", "memory-management" ]
+keywords = [ "secure", "encrypted", "memory" ]
+
+
+[dependencies]
+ring = "0.14"
+
+[dev-dependencies]
+quickcheck = "0.8"
