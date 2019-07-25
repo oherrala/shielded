@@ -15,7 +15,7 @@ keywords = [ "secure", "encrypted", "memory" ]
 
 
 [dependencies]
-ring = "0.14"
+ring = "0.16"
 
 [dev-dependencies]
 quickcheck = "0.8"

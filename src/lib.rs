@@ -34,7 +34,7 @@
     warnings
 )]
 
-use ring::aead::{self, Nonce, OpeningKey, SealingKey};
+use ring::aead::{self, BoundKey, Nonce, OpeningKey, SealingKey, UnboundKey};
 use ring::digest;
 use ring::rand::{SecureRandom, SystemRandom};
 
@@ -51,11 +51,7 @@ pub struct Shielded {
 
 impl Shielded {
     /// Construct a new `Shielded` memory.
-    pub fn new(mut buf: Vec<u8>) -> Self {
-        // Extend the vector to contain enough space for cipher's tag.
-        buf.extend(vec![0xDF; SHIELD_CIPHER.tag_len()]);
-        buf.shrink_to_fit();
-
+    pub fn new(buf: Vec<u8>) -> Self {
         let mut shielded = Self {
             prekey: Vec::new(),
             nonce: Vec::new(),
@@ -71,16 +67,18 @@ impl Shielded {
         let prekey = new_prekey(&rng);
         let nonce_bytes = new_nonce(&rng);
         let key = prekey_to_key(&prekey);
-        let sealing_key = SealingKey::new(&SHIELD_CIPHER, &key).expect("new SealingKey");
+        let unbound_key = UnboundKey::new(&SHIELD_CIPHER, &key).expect("new SealingKey");
         let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).expect("new Nonce");
-        let tag_len = SHIELD_CIPHER.tag_len();
+        let nonce_sequence = OneNonceSequence::new(nonce);
+        let mut sealing_key = SealingKey::new(unbound_key, nonce_sequence);
 
         // Add prekey into additionally authenticated data. This authenticates
         // the prekey, but doesn't encrypt it. If the authentication check fails
         // on decryption, something has modified the prekey kept in memory.
         let aad = aead::Aad::from(&prekey);
 
-        let _out_len = aead::seal_in_place(&sealing_key, nonce, aad, &mut self.memory, tag_len)
+        sealing_key
+            .seal_in_place_append_tag(aad, &mut self.memory)
             .expect("seal in place");
         self.prekey = prekey;
         self.nonce = nonce_bytes;
@@ -92,11 +90,14 @@ impl Shielded {
     /// Decrypt the Shielded content in-place.
     pub fn unshield(&mut self) -> UnShielded<'_> {
         let key = prekey_to_key(&self.prekey);
-        let opening_key = OpeningKey::new(&SHIELD_CIPHER, &key).expect("new OpeningKey");
+        let unbound_key = UnboundKey::new(&SHIELD_CIPHER, &key).expect("new OpeningKey");
         let nonce = Nonce::try_assume_unique_for_key(&self.nonce).expect("new Nonce");
+        let nonce_sequence = OneNonceSequence::new(nonce);
+        let mut opening_key = OpeningKey::new(unbound_key, nonce_sequence);
         let aad = aead::Aad::from(&self.prekey);
 
-        let plaintext = aead::open_in_place(&opening_key, nonce, aad, 0, &mut self.memory)
+        let plaintext = opening_key
+            .open_in_place(aad, &mut self.memory)
             .expect("open in place");
 
         UnShielded {
@@ -150,6 +151,21 @@ fn new_nonce(rng: &SystemRandom) -> Vec<u8> {
 fn prekey_to_key(prekey: &[u8]) -> Vec<u8> {
     let d = digest::digest(&SHIELD_PREKEY_HASH, &prekey);
     d.as_ref()[0..SHIELD_CIPHER.key_len()].to_owned()
+}
+
+// This struct and following impls' are borrowed from Ring's tests.
+struct OneNonceSequence(Option<Nonce>);
+
+impl OneNonceSequence {
+    fn new(nonce: Nonce) -> Self {
+        Self(Some(nonce))
+    }
+}
+
+impl aead::NonceSequence for OneNonceSequence {
+    fn advance(&mut self) -> Result<Nonce, ring::error::Unspecified> {
+        self.0.take().ok_or(ring::error::Unspecified)
+    }
 }
 
 #[cfg(test)]
