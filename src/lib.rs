@@ -40,7 +40,10 @@ use ring::rand::{SecureRandom, SystemRandom};
 
 use aead::CHACHA20_POLY1305 as SHIELD_CIPHER;
 use digest::SHA512 as SHIELD_PREKEY_HASH;
-static SHIELD_PREKEY_LEN: usize = 16 * 1024;
+const SHIELD_PREKEY_LEN: usize = 16 * 1024;
+
+// Used for allocations to mark allocated but not populated memory regions
+const MAGIC_BYTE: u8 = 0xDF;
 
 /// A construct holding a piece of memory encrypted.
 pub struct Shielded {
@@ -53,8 +56,8 @@ impl Shielded {
     /// Construct a new `Shielded` memory.
     pub fn new(buf: Vec<u8>) -> Self {
         let mut shielded = Self {
-            prekey: Vec::new(),
-            nonce: Vec::new(),
+            prekey: vec![MAGIC_BYTE; SHIELD_PREKEY_LEN],
+            nonce: vec![MAGIC_BYTE; aead::NONCE_LEN],
             memory: buf,
         };
 
@@ -137,13 +140,13 @@ impl<'a> Drop for UnShielded<'a> {
 }
 
 fn new_prekey(rng: &SystemRandom) -> Vec<u8> {
-    let mut k = vec![0xDF; SHIELD_PREKEY_LEN];
+    let mut k = vec![MAGIC_BYTE; SHIELD_PREKEY_LEN];
     rng.fill(&mut k).expect("rng fill prekey");
     k
 }
 
 fn new_nonce(rng: &SystemRandom) -> Vec<u8> {
-    let mut n = vec![0xDF; SHIELD_CIPHER.nonce_len()];
+    let mut n = vec![MAGIC_BYTE; SHIELD_CIPHER.nonce_len()];
     rng.fill(&mut n).expect("rng fill");
     n
 }
