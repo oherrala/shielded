@@ -142,7 +142,7 @@ impl Drop for Shielded {
 /// UnShielded memory containing decrypted contents of what previously was
 /// encrypted. After `UnShielded` goes out of scope or is dropped, the
 /// `Shielded` is reinitialized with new cryptographic keys and the contents are
-/// crypted again.
+/// encrypted again.
 pub struct UnShielded<'a> {
     // After decryption this `Shielded.memory[..plaintext_len]` contains the
     // unecrypted content.
