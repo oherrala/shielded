@@ -13,9 +13,8 @@ readme = "README.md"
 categories = [ "cryptography", "data-structures", "memory-management" ]
 keywords = [ "secure", "encrypted", "memory" ]
 
-
 [dependencies]
 ring = "0.16"
 
 [dev-dependencies]
-quickcheck = "0.8"
+quickcheck = "0.9"
