@@ -1,6 +1,6 @@
 [package]
 name = "shielded"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ossi Herrala <oherrala@iki.fi>"]
 license = "MIT"
 edition = "2018"
@@ -17,4 +17,4 @@ keywords = [ "secure", "encrypted", "memory" ]
 ring = "0.16"
 
 [dev-dependencies]
-quickcheck = "0.9"
+quickcheck = "1"
