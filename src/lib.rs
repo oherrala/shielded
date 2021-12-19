@@ -124,6 +124,28 @@ impl Shielded {
             shielded: self,
         }
     }
+
+    /// Decrypt the clone of shielded content.
+    ///
+    /// Unlike [Shielded::unshield], it doesn't need `&mut self` and need just `&self`,
+    /// but it may have slight more performance hit becaouse of `clone`.
+    ///
+    /// Additionally, `self` is still encrypted with same keys after this function,
+    /// it's also difference from [Shielded::unshield].
+    pub fn clone_and_unshield(&self) -> UnShieldedMemoryCopy {
+        let key = new_key(&self.prekey);
+        let unbound_key = UnboundKey::new(&SHIELD_CIPHER, &key.0).expect("new UnboundKey");
+        let nonce = aead::Nonce::try_assume_unique_for_key(&self.nonce.0).expect("new Nonce");
+        let nonce_sequence = OneNonceSequence::new(nonce);
+        let mut opening_key = OpeningKey::new(unbound_key, nonce_sequence);
+        let aad = aead::Aad::from(&self.prekey.0);
+
+        let mut memory = self.memory.clone();
+        let _ = opening_key
+            .open_in_place(aad, &mut memory)
+            .expect("open in place");
+        UnShieldedMemoryCopy { memory }
+    }
 }
 
 impl From<Vec<u8>> for Shielded {
