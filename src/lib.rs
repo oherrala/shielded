@@ -141,10 +141,14 @@ impl Shielded {
         let aad = aead::Aad::from(&self.prekey.0);
 
         let mut memory = self.memory.clone();
-        let _ = opening_key
+        let plaintext = opening_key
             .open_in_place(aad, &mut memory)
             .expect("open in place");
-        UnShieldedMemoryCopy { memory }
+        let plaintext_len = plaintext.len();
+        UnShieldedMemoryCopy {
+            memory,
+            plaintext_len,
+        }
     }
 }
 
@@ -196,11 +200,12 @@ impl<'a> Drop for UnShielded<'a> {
 /// its memory is also dropped and overwritten with random bytes.
 pub struct UnShieldedMemoryCopy {
     memory: Vec<u8>,
+    plaintext_len: usize,
 }
 
 impl AsRef<[u8]> for UnShieldedMemoryCopy {
     fn as_ref(&self) -> &[u8] {
-        self.memory.as_ref()
+        &self.memory[..self.plaintext_len]
     }
 }
 
