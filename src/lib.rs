@@ -168,6 +168,27 @@ impl<'a> Drop for UnShielded<'a> {
     }
 }
 
+/// Copy of unshielded memory.
+///
+/// Unlike [UnShielded], after `UnShieldedMemoryCopy` goes out of scope or is dropped,
+/// its memory is also dropped and overwritten with random bytes.
+pub struct UnShieldedMemoryCopy {
+    memory: Vec<u8>,
+}
+
+impl AsRef<[u8]> for UnShieldedMemoryCopy {
+    fn as_ref(&self) -> &[u8] {
+        self.memory.as_ref()
+    }
+}
+
+impl Drop for UnShieldedMemoryCopy {
+    fn drop(&mut self) {
+        let rng = ring::rand::SystemRandom::new();
+        rng.fill(&mut self.memory).expect("rng fill memory in drop");
+    }
+}
+
 fn new_prekey(rng: &SystemRandom) -> PreKey {
     let mut k = vec![MAGIC_BYTE; SHIELD_PREKEY_LEN];
     rng.fill(&mut k).expect("rng fill prekey");
