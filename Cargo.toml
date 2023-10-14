@@ -14,7 +14,7 @@ categories = [ "cryptography", "data-structures", "memory-management" ]
 keywords = [ "secure", "encrypted", "memory" ]
 
 [dependencies]
-ring = "0.16"
+ring = "0.17"
 
 [dev-dependencies]
 quickcheck = "1"
