@@ -1,6 +1,6 @@
 [package]
 name = "shielded"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Ossi Herrala <oherrala@iki.fi>"]
 license = "MIT"
 edition = "2018"
@@ -14,7 +14,7 @@ categories = [ "cryptography", "data-structures", "memory-management" ]
 keywords = [ "secure", "encrypted", "memory" ]
 
 [dependencies]
-ring = "0.16"
+ring = "0.17"
 
 [dev-dependencies]
-quickcheck = "1"
+quickcheck = { version = "1", default_features = false }
