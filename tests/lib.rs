@@ -38,6 +38,15 @@ fn test_unshielded_as_mut() {
     assert_eq!(b"bello", unshielded.as_ref());
 }
 
+#[test]
+fn test_immutable_unshield() {
+    let buf: Vec<u8> = b"hello".to_vec();
+    let original = buf.clone();
+    let shielded = Shielded::from(buf);
+    let unshielded = shielded.clone_and_unshield();
+    assert_eq!(original, unshielded.as_ref());
+}
+
 quickcheck! {
     fn prop_shield_unshield(xs: Vec<u8>) -> bool {
         let original = xs.clone();
